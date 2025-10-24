@@ -8,7 +8,7 @@ const meta = {
   description: "Generates AI art based on a text prompt",
   author: "Ry",
   method: "get",
-  category: "images generation",
+  category: "image generation",
   path: "/art?prompt=",
 };
 
