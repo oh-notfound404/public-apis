@@ -11,7 +11,7 @@ const meta = {
 const convoFile = 'convo.json';
 const apiUrl = 'https://www.pinoygpt.com/api/chat_response.php';
 
-// Ensure convo file exists
+// Ensure the conversation file exists
 if (!fs.existsSync(convoFile)) {
   fs.writeFileSync(convoFile, JSON.stringify({}), 'utf-8');
 }
@@ -44,20 +44,24 @@ async function onStart({ req, res }) {
   }
 
   try {
-    // Clear memory
+    // Handle "clear" command
     if (prompt.toLowerCase() === 'clear') {
       clearConversation(uid);
-      return res.json({ message: 'Conversation cleared successfully.' });
+      return res.json({ message: 'Conversation history cleared.' });
     }
 
     // Load conversation history
     let conversation = loadConversation(uid);
+
+    // Add user message
     conversation.push({ role: 'user', content: prompt });
 
-    // Combine conversation history as plain text
-    const messageText = conversation.map(m => `${m.role}: ${m.content}`).join('\n');
+    // Combine conversation as context for API
+    const messageText = conversation
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join('\n');
 
-    // Send request to external GPT-4 API
+    // Send request to GPT-4 conversational API
     const response = await axios.post(
       apiUrl,
       new URLSearchParams({ message: messageText }),
@@ -69,16 +73,16 @@ async function onStart({ req, res }) {
       }
     );
 
-    const botResponse = response.data?.response || 'No response received.';
+    const text = response.data?.response || 'No response received.';
 
-    // Save bot reply
-    conversation.push({ role: '🤖', content: botResponse });
+    // Add assistant reply
+    conversation.push({ role: 'assistant', content: text });
     saveConversation(uid, conversation);
 
     res.json({
       status: true,
-      creator: 'Developer',
-      response: botResponse
+      creator: 'Ry',
+      response: text
     });
 
   } catch (error) {
