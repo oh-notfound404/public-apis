@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 
 const meta = {
-  name: 'GPT-4 Conversational',
+  name: 'GPT-4 (Conversational)',
   path: '/gpt4-convo?prompt=&uid=',
   method: 'get',
   category: 'ai'
