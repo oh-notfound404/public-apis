@@ -11,7 +11,7 @@ const meta = {
 const convoFile = 'convo.json';
 const apiUrl = 'https://www.pinoygpt.com/api/chat_response.php';
 
-// Ensure the conversation file exists
+// Ensure convo file exists
 if (!fs.existsSync(convoFile)) {
   fs.writeFileSync(convoFile, JSON.stringify({}), 'utf-8');
 }
@@ -50,18 +50,16 @@ async function onStart({ req, res }) {
       return res.json({ message: 'Conversation history cleared.' });
     }
 
-    // Load conversation history
+    // Load previous conversation
     let conversation = loadConversation(uid);
 
-    // Add user message
+    // Add new user message
     conversation.push({ role: 'user', content: prompt });
 
-    // Combine conversation as context for API
-    const messageText = conversation
-      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-      .join('\n');
+    // Combine messages as plain text context (no assistant labels)
+    const messageText = conversation.map(m => m.content).join('\n');
 
-    // Send request to GPT-4 conversational API
+    // Send to GPT API
     const response = await axios.post(
       apiUrl,
       new URLSearchParams({ message: messageText }),
@@ -75,10 +73,11 @@ async function onStart({ req, res }) {
 
     const text = response.data?.response || 'No response received.';
 
-    // Add assistant reply
+    // Save assistant reply (for internal memory only)
     conversation.push({ role: 'assistant', content: text });
     saveConversation(uid, conversation);
 
+    // Send only clean text response (no assistant field)
     res.json({
       status: true,
       response: text
