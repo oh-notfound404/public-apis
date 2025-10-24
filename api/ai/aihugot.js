@@ -4,7 +4,7 @@ const meta = {
   name: "Ai-HugotGen",
   version: "1.0.0",
   method: "get",
-  category: "other",
+  category: "ai",
   path: "/hugot?keyword=",
 };
 
