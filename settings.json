@@ -1,11 +1,11 @@
 {
-  "name": "YourName API",
+  "name": "API LIBRARY",
   "version": "1.0.0",
   "description": "Simple and Easy-to-Use API Documentation",
   "header": {
-    "status": "online",
+    "status": "Operatioal",
     "imageSrc": [
-     "https://i.ibb.co/gbn3Nmt7/9070324cdfc07c68d60eed0c39e77573.gif"
+     "https://i.imgur.com/f9UHHgk.gif"
     ],
     "imageSize": {
       "mobile": "80%",
@@ -14,7 +14,7 @@
     }
   },
   "apiSettings": {
-    "operator": "name_here"
+    "operator": "Krypton"
   },
   "links": [
     {
