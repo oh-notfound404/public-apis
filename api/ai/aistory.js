@@ -39,7 +39,6 @@ async function onStart({ req, res }) {
 
     res.json({
       status: true,
-      creator: 'Ry',
       story
     });
 
