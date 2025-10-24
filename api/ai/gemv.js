@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 
 const meta = {
-  name: 'Gemini Vision',
+  name: 'Gemini Vision (Conversational)',
   path: '/gemini-vision?prompt=&uid=&imgUrl=',
   method: 'get',
   category: 'ai'
