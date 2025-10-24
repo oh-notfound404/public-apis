@@ -1,12 +1,12 @@
 const axios = require('axios');
 
 const meta = {
-    name: "Background Remover",
+    name: "Removebg",
     version: "1.0.0",
-    author: "rapido",
+    author: "rapidboots",
     category: "tools",
     method: "GET",
-    path: "/remove-background?imageUrl="
+    path: "/removebg?imageUrl="
 };
 
 async function onStart({ res, req }) {
