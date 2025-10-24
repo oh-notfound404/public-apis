@@ -1,66 +1,44 @@
 const axios = require("axios");
 
 const meta = {
-  name: "nglspam",
+  name: "imgbb",
   version: "1.0.0",
   method: "get",
   category: "tools",
-  path: "/nglspam?username=&amount=&message="
+  path: "/imgbb?imageUrl="
 };
 
 async function onStart({ req, res }) {
-  const { username, amount, message } = req.query;
+  const { imageUrl } = req.query;
 
-  if (!username || !amount || !message) {
+  if (!imageUrl) {
     return res.status(400).json({
-      error: "Missing required parameters",
-      message: "Please provide 'username', 'amount', and 'message'.",
-      exampleUsage: "/nglspam?username=exampleuser&amount=5&message=hello"
+      error: "Missing required parameter 'imageUrl'.",
+      exampleUsage: "/imgbb?imageUrl=https://example.com/image.jpg"
     });
   }
-
-  const parsedAmount = parseInt(amount);
-
-  if (isNaN(parsedAmount)) {
-    return res.status(400).json({ error: "Amount must be a valid number." });
-  }
-  if (parsedAmount > 40) {
-    return res.status(400).json({ error: "Maximum number of requests is 40." });
-  }
-  if (parsedAmount < 1) {
-    return res.status(400).json({ error: "Amount must be greater than 0." });
-  }
-
-  const headers = {
-    referer: `https://ngl.link/${username}`,
-    "accept-language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7"
-  };
-
-  const data = {
-    username,
-    question: message,
-    deviceId: "ea356443-ab18-4a49-b590-bd8f96b994ee", // static device ID
-    gameSlug: "",
-    referrer: ""
-  };
 
   try {
-    for (let i = 0; i < parsedAmount; i++) {
-      await axios.post("https://ngl.link/api/submit", data, { headers });
-      console.log(`Message ${i + 1} sent to ${username}`);
-    }
-
-    res.status(200).json({
-      success: true,
-      message: `Successfully sent ${parsedAmount} messages to ${username}.`
+    const response = await axios.post("https://api.imgbb.com/1/upload", null, {
+      params: {
+        key: "6cafd32149a5bbc76e098eff299d2e18",
+        image: imageUrl
+      }
     });
+
+    const { data } = response.data;
+
+    // Only return image_url in the response
+    res.status(200).json({
+      image_url: data.url
+    });
+
   } catch (error) {
-    console.error("Error in sending messages:", error.message);
+    console.error("ImgBB upload error:", error.message);
 
     res.status(500).json({
-      error: "Internal Server Error",
-      message: "An error occurred while sending messages.",
-      errorDetails: process.env.NODE_ENV === "development" ? error.message : undefined
+      error: "Failed to upload image to ImgBB.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }
 }
