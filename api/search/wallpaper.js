@@ -3,46 +3,43 @@ const cheerio = require("cheerio");
 
 const meta = {
   name: "wallpaper",
-  version: "1.0.2",
+  version: "1.0.0",
   method: "get",
   category: "search",
-  path: "/wallpaper?query=&limit=&page="
+  path: "/wallpaper?prompt=&page="
 };
 
-// Core scraper
-async function wallpaperSearch(query, page = 1, limit = 10) {
+// Core scraping function
+async function wallpaperSearch(query, page = "1") {
   const url = `https://www.besthdwallpaper.com/search?CurrentPage=${page}&q=${encodeURIComponent(query)}`;
   const { data } = await axios.get(url);
   const $ = cheerio.load(data);
   const results = [];
 
   $("div.grid-item").each((_, el) => {
-    const title = $(el).find("div.info > a > h3").text().trim();
-    const type = $(el).find("div.info > a:nth-child(2)").text().trim();
-    const source = "https://www.besthdwallpaper.com" + $(el).find("div > a:nth-child(3)").attr("href");
-    const image = $(el).find("picture > source:nth-child(2)").attr("srcset");
-
-    if (title && image) {
-      results.push({ title, type, source, image });
-    }
+    results.push({
+      title: $(el).find("div.info > a > h3").text().trim(),
+      type: $(el).find("div.info > a:nth-child(2)").text().trim(),
+      source: "https://www.besthdwallpaper.com" + $(el).find("div > a:nth-child(3)").attr("href"),
+      image: $(el).find("picture > source:nth-child(2)").attr("srcset")
+    });
   });
 
-  return results.slice(0, Number(limit));
+  return results;
 }
 
-// Main entry
+// API entrypoint
 async function onStart({ req, res }) {
   try {
-    const { query, limit = 10, page = 1 } = req.query;
-
-    if (!query) {
+    const { prompt, page = "1" } = req.query;
+    if (!prompt) {
       return res.json({
         status: false,
-        message: "❗ Please provide a 'query' parameter"
+        message: "❗ Please provide a 'prompt' parameter"
       });
     }
 
-    const results = await wallpaperSearch(query, page, limit);
+    const results = await wallpaperSearch(prompt, page);
 
     if (!results.length) {
       return res.json({
@@ -54,8 +51,7 @@ async function onStart({ req, res }) {
     res.json({
       status: true,
       author: meta.author,
-      current_page: Number(page),
-      total_returned: results.length,
+      count: results.length,
       results
     });
   } catch (err) {
