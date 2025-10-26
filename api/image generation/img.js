@@ -17,10 +17,8 @@ async function onStart({ req, res }) {
       return res.status(400).json({ error: "Prompt parameter is required" });
     }
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY in environment variables" });
-    }
+    // 🔑 Insert your API key here directly
+    const GEMINI_API_KEY = "AIzaSyB2TTV5iIm77ZYx6YU2c_4PCZYxz7U9vlA"; // <-- Replace this with your real key
 
     const body = {
       instances: [
@@ -38,7 +36,7 @@ async function onStart({ req, res }) {
       body,
       {
         headers: {
-          "x-goog-api-key": AIzaSyB2TTV5iIm77ZYx6YU2c_4PCZYxz7U9vlA,
+          "x-goog-api-key": GEMINI_API_KEY,
           "Content-Type": "application/json",
         },
       }
