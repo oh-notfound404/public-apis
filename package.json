@@ -15,6 +15,7 @@
     "body-parser": "1.20.3",
     "chalk": "4.1.2",
     "crypto": "1.0.1",
+    "@google/genai": "^0.13.0",
     "fs-extra": "11.2.0",
     "ultimate-guitar": "2.0.3",
     "cheerio": "1.0.0",
