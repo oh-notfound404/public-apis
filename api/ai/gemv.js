@@ -3,16 +3,15 @@ const fs = require('fs');
 
 const meta = {
   name: 'Gemini Vision (Conversational)',
-  path: '/gemini-vision?prompt=&uid=&imgUrl=',
+  path: '/gemini-vision?prompt=&uid=&imgUrl=&apikey=',
   method: 'get',
   category: 'ai'
 };
 
 const convoFile = 'convo.json';
-const apiKey = "AIzaSyBAG9ad84ZWCDSAjey346zCgXLTjMLr3aE";
 const model = "gemini-2.5-flash";
 
-// Ensure file exists
+// Ensure conversation file exists
 if (!fs.existsSync(convoFile)) {
   fs.writeFileSync(convoFile, JSON.stringify({}), 'utf-8');
 }
@@ -35,12 +34,18 @@ function clearConversation(uid) {
 }
 
 async function onStart({ req, res }) {
-  const { prompt, uid, imgUrl, img } = req.query;
+  const { prompt, uid, imgUrl, img, apikey } = req.query;
 
   if (!prompt || !uid) {
     return res.status(400).json({
-      error: 'Both prompt and uid parameters are required',
-      example: '/gemini-vision?prompt=hello&uid=123'
+      error: 'Both "prompt" and "uid" parameters are required',
+      example: '/gemini-vision?prompt=hello&uid=123&apikey=YOUR_KEY'
+    });
+  }
+
+  if (!apikey) {
+    return res.status(400).json({
+      error: 'Missing "apikey" parameter. Example: /gemini-vision?prompt=hi&uid=123&apikey=YOUR_KEY'
     });
   }
 
@@ -85,9 +90,9 @@ async function onStart({ req, res }) {
       }))
     };
 
-    // Send request to Gemini API
+    // Send request to Gemini API using provided API key
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apikey}`,
       payload,
       {
         headers: {
