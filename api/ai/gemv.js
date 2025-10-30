@@ -45,7 +45,7 @@ async function onStart({ req, res }) {
 
   if (!apikey) {
     return res.status(400).json({
-      error: 'Missing "apikey" parameter. Example: /gemini-vision?prompt=hi&uid=123&apikey=YOUR_KEY'
+      error: 'Missing "apikey" parameter. Example: /gemini-vision?prompt=hi&uid=123&apikey=GEMINI_API_KEY > https://aistudio.google.com/api-keys'
     });
   }
 
@@ -102,7 +102,7 @@ async function onStart({ req, res }) {
       }
     );
 
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "Walang sagot na nakuha.";
+    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "404.";
 
     // Save AI response into memory
     conversation.push({ role: 'model', parts: [{ text }] });
