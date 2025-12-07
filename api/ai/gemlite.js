@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const meta = {
   name: 'Gemini Lite (Conversational)',
-  path: '/gemini-lite?prompt=&uid=&imgUrl=&apikey=',
+  path: '/gemini-lite?prompt=&uid=&imgUrl=&google-gemini-apikey=',
   method: 'get',
   category: 'ai'
 };
@@ -45,7 +45,7 @@ async function onStart({ req, res }) {
 
   if (!apikey) {
     return res.status(400).json({
-      error: 'Missing "apikey" parameter. Example: /gemini-lite?prompt=hi&uid=123&apikey=YOUR_KEY'
+      error: 'Missing "apikey" parameter. Example: /gemini-lite?prompt=hi&uid=123&apikey=GOOGLE-GEMINI-APIKEY'
     });
   }
 
