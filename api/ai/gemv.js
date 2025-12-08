@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const meta = {
   name: 'Gemini Vision (Conversational)',
-  path: '/gemini-vision?prompt=&uid=&imgUrl=& google-gemini-apikey=',
+  path: '/gemini-vision?prompt=&uid=&imgUrl=&apikey=',
   method: 'get',
   category: 'ai'
 };
