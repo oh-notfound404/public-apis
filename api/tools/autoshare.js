@@ -3,12 +3,12 @@ const qs = require("querystring");
 
 const meta = {
   name: "spam-share",
-  version: "1.0.0",
-  description: "Facebook post sharer",
+  version: "1.1.0",
+  description: "Facebook post sharer (main account muted)",
   author: "Vern and Ry",
   method: "get",
-  category: "tools",
-  path: "/autoshare?cookie=&link=&limit="
+  category: "other",
+  path: "/fb-share?cookie=&link=&limit="
 };
 
 const uaList = [
@@ -17,18 +17,21 @@ const uaList = [
   "Mozilla/5.0 (Linux; Android 11; G91 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Mobile Safari/537.36[FBAN/EMA;FBLC/fr_FR;FBAV/325.0.1.4.108;]"
 ];
 
-// extract EAAG token from business.facebook.com using Cookie header
+// 🔑 Extract EAAG token
 async function extractToken(cookie, ua) {
   try {
-    const res = await axios.get("https://business.facebook.com/business_locations", {
-      headers: {
-        "User-Agent": ua,
-        "Referer": "https://www.facebook.com/",
-        "Cookie": cookie,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-      },
-      timeout: 15000
-    });
+    const res = await axios.get(
+      "https://business.facebook.com/business_locations",
+      {
+        headers: {
+          "User-Agent": ua,
+          "Referer": "https://www.facebook.com/",
+          "Cookie": cookie,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        },
+        timeout: 15000
+      }
+    );
 
     const match = String(res.data).match(/(EAAG\w+)/);
     return match ? match[1] : null;
@@ -38,6 +41,7 @@ async function extractToken(cookie, ua) {
   }
 }
 
+// 🍪 Parse cookie string to object
 function parseCookiesToObject(cookie) {
   const out = {};
   cookie.split(";").forEach(part => {
@@ -48,46 +52,51 @@ function parseCookiesToObject(cookie) {
   return out;
 }
 
-async function sharePost(token, cookiesObj, link, n, start, ua) {
+// 🔁 Share function (supports silent publish)
+async function sharePost(token, cookiesObj, link, n, start, ua, published = true) {
   try {
-    const postBody = qs.stringify({
+    const body = qs.stringify({
       link,
-      access_token: token
+      access_token: token,
+      published // 🔥 KEY FIX
     });
 
     const response = await axios.post(
       "https://graph.facebook.com/v18.0/me/feed",
-      postBody,
+      body,
       {
         headers: {
           "User-Agent": ua,
           "Content-Type": "application/x-www-form-urlencoded",
-          "Cookie": Object.entries(cookiesObj).map(x => x.join("=")).join("; ")
+          "Cookie": Object.entries(cookiesObj)
+            .map(([k, v]) => `${k}=${v}`)
+            .join("; ")
         },
         timeout: 15000
       }
     );
 
-    if (response.data.id) {
-      let diff = Math.floor((Date.now() - start) / 1000);
-      return { n, status: 'success', time: diff };
+    if (response.data && response.data.id) {
+      const diff = Math.floor((Date.now() - start) / 1000);
+      return { n, status: "success", time: diff };
     } else {
-      return { n, status: 'failed', data: response.data };
+      return { n, status: "failed", data: response.data };
     }
   } catch (e) {
-    return { n, status: 'error', message: e.message };
+    return { n, status: "error", message: e.message };
   }
 }
 
+// 🚀 Main handler
 async function onStart({ req, res }) {
   try {
-    // from query (GET)
     const { cookie, link, limit } = req.query;
 
     if (!cookie || !link || !limit) {
       return res.status(400).json({
         status: false,
-        message: "Missing 'cookie', 'link', or 'limit' query parameter. Example: /fb-share?cookie=...&link=...&limit=3"
+        message:
+          "Missing 'cookie', 'link', or 'limit'. Example: /fb-share?cookie=...&link=...&limit=5"
       });
     }
 
@@ -102,35 +111,49 @@ async function onStart({ req, res }) {
     }
 
     const cookiesObj = parseCookiesToObject(cookie);
-    const tries = Math.max(0, Number(limit));
-
+    const total = Math.max(0, Number(limit));
     const start = Date.now();
-    const chunk = 40;
-    let n = 1;
-    let results = [];
 
-    while (n <= tries) {
+    let results = [];
+    let n = 1;
+    const chunk = 40;
+
+    // 🔇 MAIN ACCOUNT SILENT SHARE (NOT POSTED)
+    await sharePost(token, cookiesObj, link, 0, start, ua, false);
+
+    // 🔁 ACTUAL SHARES
+    while (n <= total) {
       let batch = [];
-      for (let i = 0; i < chunk && n <= tries; i++, n++) {
-        batch.push(sharePost(token, cookiesObj, link, n, start, ua));
+
+      for (let i = 0; i < chunk && n <= total; i++, n++) {
+        batch.push(
+          sharePost(token, cookiesObj, link, n, start, ua, true)
+        );
       }
-      let settled = await Promise.allSettled(batch);
-      results.push(...settled.map(s => s.status === 'fulfilled' ? s.value : { n: s.reason.n, status: 'error', message: s.reason.message }));
-      if (n <= tries) {
+
+      const settled = await Promise.allSettled(batch);
+      results.push(
+        ...settled.map(s =>
+          s.status === "fulfilled"
+            ? s.value
+            : { n: "?", status: "error", message: s.reason?.message }
+        )
+      );
+
+      if (n <= total) {
         await new Promise(r => setTimeout(r, 10000));
       }
     }
 
-    const success = results.filter(r => r.status === 'success').length;
+    const success = results.filter(r => r.status === "success").length;
 
     return res.status(200).json({
       status: true,
       message: `✅ Successfully shared ${success} times.`,
       success_count: success,
-      used_token: !!token,
+      used_token: true,
       results
     });
-
   } catch (error) {
     console.error("❌ FB-Share Error:", error.message || error);
     return res.status(500).json({
