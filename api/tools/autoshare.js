@@ -1,5 +1,3 @@
-ito script
-
 const axios = require("axios");
 const qs = require("querystring");
 
