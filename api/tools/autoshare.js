@@ -9,7 +9,7 @@ const meta = {
   description: "Facebook post sharer",
   author: "Vern and Ry",
   method: "get",
-  category: "other",
+  category: "tools",
   path: "/autoshare?cookie=&link=&limit="
 };
 
