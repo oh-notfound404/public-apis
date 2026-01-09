@@ -2,21 +2,21 @@ const axios = require("axios");
 
 const meta = {
   name: "fbshield",
-  version: "1.0.0",
-  description: "Token EAAAU & Enable true or false.",
+  version: "1.1.0",
+  description: "Enable or disable Facebook Profile Guard using cookie.",
   author: "Ry",
   method: "get",
   category: "tools",
-  path: "/fbshield?token=&enable="
+  path: "/fbshield?cookie=&enable="
 };
 
 async function onStart({ res, req }) {
-  const { token, enable } = req.query;
+  const { cookie, enable } = req.query;
 
-  if (!token || typeof enable === "undefined") {
+  if (!cookie || typeof enable === "undefined") {
     return res.status(400).json({
-      error: "Missing 'token' or 'enable' parameters.",
-      usage: "/fbshield?token=EAAAA...&enable=true"
+      error: "Missing 'cookie' or 'enable' parameters.",
+      usage: "/fbshield?cookie=sb=...; c_user=...; xs=...;&enable=true"
     });
   }
 
@@ -32,7 +32,8 @@ async function onStart({ res, req }) {
       }
     };
 
-    const url = `https://graph.facebook.com/graphql`;
+    const url = "https://graph.facebook.com/graphql";
+
     const params = new URLSearchParams({
       variables: JSON.stringify(variables),
       method: "post",
@@ -43,22 +44,31 @@ async function onStart({ res, req }) {
       locale: "en_US",
       client_country_code: "US",
       fb_api_req_friendly_name: "IsShieldedSetMutation",
-      fb_api_caller_class: "IsShieldedSetMutation",
-      access_token: token
+      fb_api_caller_class: "IsShieldedSetMutation"
     });
 
-    const response = await axios.post(`${url}?${params.toString()}`);
-    const result = response.data;
+    const response = await axios.post(
+      `${url}?${params.toString()}`,
+      null,
+      {
+        headers: {
+          "Cookie": cookie,
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
+      }
+    );
 
     return res.json({
       message: `Profile guard ${enable === "true" ? "enabled" : "disabled"} successfully.`,
-      result
+      result: response.data
     });
 
   } catch (error) {
     return res.status(500).json({
       error: "Failed to toggle Facebook profile guard.",
-      reason: error.message
+      reason: error.response?.data || error.message
     });
   }
 }
